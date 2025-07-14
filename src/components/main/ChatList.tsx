@@ -1,5 +1,5 @@
 import { useRef, useEffect } from "react";
-import { Message } from "./types";
+import { Message } from "../types";
 import ChatBubble from "./ChatBubble";
 import ChatLoadIndicator from "./ChatLoadIndicator";
 import EmptyState from "./EmptyState";
