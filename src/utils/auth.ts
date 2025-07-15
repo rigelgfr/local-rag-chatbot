@@ -1,12 +1,26 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
+import { customSession } from "better-auth/plugins";
 import { PrismaClient } from "@/generated/prisma";
 import { authClient } from "@/lib/auth-client";
 import { redirect } from "next/navigation";
+import { findUserRoles } from "./db";
 
 const prisma = new PrismaClient();
 
 export const auth = betterAuth({
+  plugins: [
+    customSession(async ({ user, session }) => {
+      const roles = await findUserRoles(session.userId);
+      return {
+        user: {
+          roles,
+          ...user,
+          session,
+        },
+      };
+    }),
+  ],
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),
@@ -16,6 +30,14 @@ export const auth = betterAuth({
       clientSecret: process.env.MICROSOFT_CLIENT_SECRET as string,
       tenantId: process.env.MICROSOFT_TENANT_ID as string,
       prompt: "select_account",
+    },
+  },
+  user: {
+    additionalFields: {
+      role: {
+        type: ["USER", "ADMIN", "MOD"],
+        required: true,
+      },
     },
   },
 });
