@@ -45,7 +45,7 @@ export default function ChatBubble({ message }: ChatBubbleProps) {
       <div
         className={`max-w-xs sm:max-w-md lg:max-w-lg px-4 py-2 rounded-lg ${
           message.sender === "user"
-            ? "bg-aquamarine-800 dark:bg-aquamarine text-green-950 dark:text-black-2 rounded-tr-none"
+            ? "bg-aquamarine-800 dark:bg-aquamarine text-black-2 rounded-tr-none"
             : "bg-background border text-foreground rounded-tl-none"
         }`}>
         <div className="flex items-start space-x-2">

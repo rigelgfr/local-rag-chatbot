@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { Message } from "@/components/types";
 import { sendChatMessage } from "@/utils/chat";
-import ChatHeader from "@/components/Header";
 import ChatList from "@/components/main/ChatList";
 import ChatInput from "@/components/main/ChatInput";
 
@@ -55,8 +54,6 @@ export default function ChatPage() {
 
   return (
     <div className="flex flex-col h-screen bg-gray-50 dark:bg-black-2">
-      <ChatHeader />
-
       <div className="flex-1 overflow-hidden">
         <div className="max-w-4xl mx-auto h-full flex flex-col">
           <ChatList messages={messages} isLoading={isLoading} />
