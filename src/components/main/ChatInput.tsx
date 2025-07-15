@@ -49,7 +49,7 @@ export default function ChatInput({
   }, [input, setInput]);
 
   return (
-    <div className="p-3 sm:mb-4 bg-background rounded-t-xl sm:rounded-xl border border-gray-200 dark:border-none">
+    <div className="p-3 sm:mb-4 bg-background rounded-t-xl sm:rounded-xl border">
       <form
         onSubmit={onSendMessage}
         className="flex flex-col space-y-1 items-center">
