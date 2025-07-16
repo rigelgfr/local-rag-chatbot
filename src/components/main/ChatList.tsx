@@ -20,10 +20,16 @@ export default function ChatList({ messages, isLoading }: ChatListProps) {
     scrollToBottom();
   }, [messages]);
 
-  return (
-    <div className="p-4 space-y-4">
-      {messages.length === 0 && <EmptyState />}
+  if (messages.length === 0) {
+    return (
+      <div className="flex flex-col justify-center items-center h-full">
+        <EmptyState />
+      </div>
+    );
+  }
 
+  return (
+    <div className="p-4 space-y-4 w-full">
       {messages.map((message) => (
         <ChatBubble key={message.id} message={message} />
       ))}

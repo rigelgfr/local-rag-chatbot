@@ -54,11 +54,12 @@ export default function ChatPage() {
 
   return (
     <div className="flex flex-col h-full bg-gray-50 dark:bg-black-2">
-      <div className="flex-1 overflow-y-auto">
-        <div className="max-w-4xl mx-auto">
+      <div className="flex-1 flex flex-col overflow-y-auto">
+        <div className="max-w-4xl mx-auto w-full flex-1 flex flex-col">
           <ChatList messages={messages} isLoading={isLoading} />
         </div>
       </div>
+
       <div className="flex-shrink-0">
         <div className="max-w-4xl mx-auto">
           <ChatInput
