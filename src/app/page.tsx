@@ -1,6 +1,6 @@
 "use client";
 
-import ChatHeader from "@/components/Header";
+import Header from "@/components/Header";
 import LoginPage from "@/components/login/LoginPage";
 import ChatPage from "@/components/main/ChatPage";
 import { authClient } from "@/lib/auth-client";
@@ -12,7 +12,7 @@ export default function Page() {
   return (
     <div className="h-screen flex flex-col bg-gray-50 dark:bg-black-2 overflow-hidden">
       <div className="flex-shrink-0">
-        <ChatHeader />
+        <Header />
       </div>
 
       <div className="flex-1 items-center justify-center overflow-hidden">

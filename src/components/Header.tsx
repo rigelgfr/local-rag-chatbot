@@ -5,7 +5,7 @@ import { authClient } from "@/lib/auth-client";
 import { Skeleton } from "./ui/skeleton";
 import { handleLogin } from "@/utils/auth";
 
-export default function ChatHeader() {
+export default function Header() {
   const { data: session, isPending } = authClient.useSession();
 
   const onLoginClick = async () => {
