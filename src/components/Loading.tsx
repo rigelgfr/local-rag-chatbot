@@ -14,7 +14,7 @@ const sizeMap = {
 
 export const Loading: React.FC<LoadingProps> = ({ size = "md" }) => {
   return (
-    <div className="flex-1 flex items-center justify-center">
+    <div className="h-full w-full flex items-center justify-center">
       <Loader2
         className={clsx(
           "animate-spin",

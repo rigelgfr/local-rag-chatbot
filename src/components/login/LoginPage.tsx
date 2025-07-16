@@ -1,8 +1,21 @@
 "use client";
 
+import { useState } from "react";
 import { handleLogin } from "@/utils/auth";
+import { Loading } from "@/components/Loading";
 
 export default function LoginPage() {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const onLoginClick = async () => {
+    setIsLoading(true);
+    await handleLogin("/");
+  };
+
+  if (isLoading) {
+    return <Loading size="lg" />;
+  }
+
   return (
     <main className="flex flex-col gap-8 max-w-md p-8 mx-auto items-center justify-center h-full">
       <div className="text-center space-y-2">
@@ -16,7 +29,7 @@ export default function LoginPage() {
 
       <div className="w-full space-y-4">
         <button
-          onClick={() => handleLogin("/")}
+          onClick={onLoginClick}
           className="w-full transition-transform hover:scale-102 focus:outline-none focus:ring-2 focus:ring-aquamarine focus:ring-offset-2 rounded">
           <img
             src="/login-button/ms-symbollockup_signin_dark.svg"

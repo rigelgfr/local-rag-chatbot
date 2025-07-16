@@ -16,7 +16,13 @@ export default function Page() {
       </div>
 
       <div className="flex-1 items-center justify-center overflow-hidden">
-        {isPending ? <Loading /> : !session ? <LoginPage /> : <ChatPage />}
+        {isPending ? (
+          <Loading size="lg" />
+        ) : !session ? (
+          <LoginPage />
+        ) : (
+          <ChatPage />
+        )}
       </div>
     </div>
   );
