@@ -1,5 +1,5 @@
 export const sendChatMessage = async (sessionId: string, chatInput: string) => {
-  const response = await fetch("/api/test", {
+  const response = await fetch("/api/chat", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

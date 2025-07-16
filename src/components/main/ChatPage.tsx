@@ -10,6 +10,7 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
   const [sessionId] = useState(() => crypto.randomUUID());
 
   const sendMessage = async (e: React.FormEvent) => {
@@ -52,6 +53,24 @@ export default function ChatPage() {
     }
   };
 
+  const handleResetChat = async () => {
+    setIsResetting(true);
+    try {
+      const res = await fetch(`/api/chat/reset/${sessionId}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to reset chat");
+      }
+
+      setMessages([]);
+      setIsResetting(false);
+    } catch (err) {
+      console.error("Reset failed:", err);
+    }
+  };
+
   return (
     <div className="flex flex-col h-full bg-gray-50 dark:bg-black-2">
       <div className="flex-1 flex flex-col overflow-y-auto">
@@ -67,6 +86,9 @@ export default function ChatPage() {
             setInput={setInput}
             onSendMessage={sendMessage}
             isLoading={isLoading}
+            messages={messages}
+            onResetChat={handleResetChat}
+            isResetting={isResetting}
           />
         </div>
       </div>
