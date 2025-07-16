@@ -5,7 +5,11 @@ interface ChatBubbleProps {
 }
 
 function formatText(text: string) {
-  const lines = text.split("\n");
+  const lines = text.trimEnd().split("\n");
+
+  while (lines.length && lines[lines.length - 1].trim() === "") {
+    lines.pop();
+  }
 
   return lines.map((line, index) => {
     const trimmedLine = line.trim();
