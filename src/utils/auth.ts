@@ -1,12 +1,10 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { customSession } from "better-auth/plugins";
-import { PrismaClient } from "@/generated/prisma";
 import { authClient } from "@/lib/auth-client";
 import { redirect } from "next/navigation";
 import { findUserRoles } from "./db";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prisma";
 
 export const auth = betterAuth({
   plugins: [

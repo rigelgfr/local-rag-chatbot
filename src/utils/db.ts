@@ -1,6 +1,4 @@
-import { PrismaClient } from "@/generated/prisma";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prisma";
 
 export async function findUserRoles(userId: string) {
   const user = await prisma.user.findUnique({
