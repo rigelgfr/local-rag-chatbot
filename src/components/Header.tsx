@@ -3,9 +3,14 @@ import { ThemeToggle } from "./ToggleUI";
 import ProfilePic from "./ProfilePic";
 import { authClient } from "@/lib/auth-client";
 import { Skeleton } from "./ui/skeleton";
+import { handleLogin } from "@/utils/auth";
 
 export default function ChatHeader() {
   const { data: session, isPending } = authClient.useSession();
+
+  const onLoginClick = async () => {
+    await handleLogin("/");
+  };
 
   return (
     <header className="bg-white dark:bg-background border-b border-gray-200 dark:border-aquamarine px-4 py-3">
@@ -21,7 +26,10 @@ export default function ChatHeader() {
         ) : session ? (
           <ProfilePic />
         ) : (
-          <button aria-label="Sign in with Microsoft">
+          <button
+            aria-label="Sign in with Microsoft"
+            onClick={onLoginClick}
+            className="hover:scale-120 transition-all duration-200">
             <img
               src="/login-button/ms-symbollockup_mssymbol_19.svg"
               alt="Sign in with Microsoft"
