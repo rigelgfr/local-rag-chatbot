@@ -43,9 +43,11 @@ export default function ProfilePic() {
         )}
         <Separator />
         {userRole === "ADMIN" && (
-          <DropdownMenuItem>Admin Panel</DropdownMenuItem>
+          <>
+            <DropdownMenuItem>Admin Panel</DropdownMenuItem>
+            <Separator />
+          </>
         )}
-        <Separator />
         <DropdownMenuItem onClick={() => handleLogout("/")}>
           Log out
         </DropdownMenuItem>
