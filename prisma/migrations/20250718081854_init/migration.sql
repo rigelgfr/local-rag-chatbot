@@ -1,3 +1,12 @@
+-- CreateExtension
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA "app";
+
+-- CreateExtension
+CREATE EXTENSION IF NOT EXISTS "vector";
+
+-- CreateEnum
+CREATE TYPE "Role" AS ENUM ('USER', 'ADMIN', 'MOD');
+
 -- CreateTable
 CREATE TABLE "user" (
     "id" TEXT NOT NULL,
@@ -7,6 +16,7 @@ CREATE TABLE "user" (
     "image" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL,
     "updatedAt" TIMESTAMP(3) NOT NULL,
+    "role" "Role" NOT NULL DEFAULT 'USER',
 
     CONSTRAINT "user_pkey" PRIMARY KEY ("id")
 );
@@ -54,6 +64,38 @@ CREATE TABLE "verification" (
     "updatedAt" TIMESTAMP(3),
 
     CONSTRAINT "verification_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "chat_history" (
+    "id" SERIAL NOT NULL,
+    "session_id" VARCHAR(255) NOT NULL,
+    "message" JSONB NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "chat_history_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "documents" (
+    "id" BIGSERIAL NOT NULL,
+    "content" TEXT,
+    "metadata" JSONB,
+    "embedding" vector(768),
+    "created_at" TIMESTAMP(6) DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "documents_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "document_metadata" (
+    "id" TEXT NOT NULL,
+    "title" TEXT,
+    "url" TEXT,
+    "created_at" TIMESTAMP(6) DEFAULT CURRENT_TIMESTAMP,
+    "schema" TEXT,
+
+    CONSTRAINT "document_metadata_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
