@@ -38,6 +38,13 @@ export const auth = betterAuth({
       },
     },
   },
+  onAPIError: {
+    throw: true,
+    onError: (error, _ctx) => {
+      console.error("Auth error:", error);
+    },
+    errorURL: "/",
+  },
 });
 
 export const handleLogin = async (callbackURL: string) => {
