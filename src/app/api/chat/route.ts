@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${N8N_BEARER_TOKEN}`,
+        Authorization: `bearer ${N8N_BEARER_TOKEN}`,
       },
       body: JSON.stringify({
         sessionId,
