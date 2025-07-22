@@ -74,7 +74,7 @@ export default function ChatInput({
           <Button
             onClick={onResetChat}
             type="button"
-            disabled={messages.length === 0 || isResetting}
+            disabled={messages.length === 0 || isResetting || isLoading}
             variant="ghost"
             className="w-9 -ml-1 text-foreground dark:hover:bg-black-2">
             <RotateCcw className="w-4 h-4" />
