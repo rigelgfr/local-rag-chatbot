@@ -58,10 +58,9 @@ export const handleLogin = async (callbackURL: string) => {
   }
 };
 
-export const handleLogout = async (callbackURL: string) => {
+export const handleLogout = async () => {
   try {
     await authClient.signOut();
-    redirect(callbackURL);
   } catch (error) {
     console.error("Logout failed:", error);
   }

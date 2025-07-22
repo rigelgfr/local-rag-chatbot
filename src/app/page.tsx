@@ -1,10 +1,9 @@
 "use client";
 
-import Header from "@/components/Header";
 import LoginPage from "@/components/login/LoginPage";
 import ChatPage from "@/components/main/ChatPage";
 import { authClient } from "@/lib/auth-client";
-import { Loading } from "@/components/Loading";
+import { Loading } from "@/components/custom-ui/Loading";
 import { useEffect } from "react";
 import { toast } from "sonner";
 
@@ -58,21 +57,17 @@ export default function Page() {
     }
   }, []);
 
-  return (
-    <div className="h-screen flex flex-col bg-gray-50 dark:bg-black-2 overflow-hidden">
-      <div className="flex-shrink-0">
-        <Header />
+  if (isPending) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <Loading size="lg" />
       </div>
+    );
+  }
 
-      <div className="flex-1 items-center justify-center overflow-hidden">
-        {isPending ? (
-          <Loading size="lg" />
-        ) : !session ? (
-          <LoginPage />
-        ) : (
-          <ChatPage />
-        )}
-      </div>
-    </div>
-  );
+  if (!session) {
+    return <LoginPage />;
+  }
+
+  return <ChatPage />;
 }

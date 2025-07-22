@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { handleLogin } from "@/utils/auth";
-import { Loading } from "@/components/Loading";
+import { Loading } from "@/components/custom-ui/Loading";
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -17,13 +17,13 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex flex-col gap-8 max-w-md p-8 mx-auto items-center justify-center h-full">
+    <main className="flex flex-col gap-8 max-w-md sm:max-w-lg p-8 mx-auto items-center justify-center h-full">
       <div className="text-center space-y-2">
-        <h1 className="text-3xl font-bold text-foreground">
+        <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
           Welcome to ALVA AI
         </h1>
-        <p className="text-muted-foreground text-lg">
-          Login to chat with ALVA's AI Assistant
+        <p className="text-muted-foreground text-sm sm:text-lg">
+          Login with ALVA's Microsoft account to get started.
         </p>
       </div>
 

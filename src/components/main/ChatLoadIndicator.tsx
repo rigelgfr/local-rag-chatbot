@@ -1,4 +1,4 @@
-import { Loading } from "../Loading";
+import { Loading } from "../custom-ui/Loading";
 
 export default function ChatLoadIndicator() {
   return (
