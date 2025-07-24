@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Message } from "@/components/types";
+import { Message } from "@/types/chat";
 import { sendChatMessage } from "@/utils/chat";
 import ChatList from "@/components/main/ChatList";
 import ChatInput from "@/components/main/ChatInput";

@@ -24,7 +24,7 @@ export default function ProfilePic() {
   const userRole = data?.user.roles;
 
   const handleAdminClick = () => {
-    router.push("/admin");
+    router.push("/admin/docs");
   };
 
   const onLogoutClick = async () => {

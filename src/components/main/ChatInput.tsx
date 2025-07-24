@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Send, RotateCcw, Pause } from "lucide-react";
 import { useEffect, useRef } from "react";
-import { Message } from "../types";
+import { Message } from "../../types/chat";
 
 interface ChatInputProps {
   input: string;
