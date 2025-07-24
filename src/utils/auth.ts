@@ -2,20 +2,41 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { customSession } from "better-auth/plugins";
 import { authClient } from "@/lib/auth-client";
-import { redirect } from "next/navigation";
-import { findUserRoles } from "./db";
+import { findUserAuthDetails } from "./db";
 import { prisma } from "@/lib/prisma";
+import { encrypt, decrypt } from "@/lib/crypt";
+import { refreshMicrosoftAccessToken } from "./graph-api/refresh-access-token";
 
 export const auth = betterAuth({
+  databaseHooks: {
+    account: {
+      create: {
+        async before(account) {
+          const withEncryptedTokens = { ...account };
+          if (account.accessToken) {
+            withEncryptedTokens.accessToken = encrypt(account.accessToken);
+          }
+          if (account.refreshToken) {
+            withEncryptedTokens.refreshToken = encrypt(account.refreshToken);
+          }
+          return {
+            data: withEncryptedTokens,
+          };
+        },
+      },
+    },
+  },
   plugins: [
     customSession(async ({ user, session }) => {
-      const roles = await findUserRoles(session.userId);
+      const authDetails = await findUserAuthDetails(session.userId);
       return {
+        ...session,
         user: {
-          roles,
+          roles: authDetails.role,
           ...user,
-          session,
         },
+        accessToken: authDetails.accessToken,
+        refreshToken: authDetails.refreshToken,
       };
     }),
   ],
@@ -28,6 +49,27 @@ export const auth = betterAuth({
       clientSecret: process.env.MICROSOFT_CLIENT_SECRET as string,
       tenantId: process.env.MICROSOFT_TENANT_ID as string,
       prompt: "select_account",
+      scope: [
+        "openid",
+        "profile",
+        "email",
+        "https://graph.microsoft.com/Files.ReadWrite",
+      ],
+      async refreshAccessToken(refreshToken) {
+        const decryptedRefreshToken = decrypt(refreshToken);
+        const tokenResponse = await refreshMicrosoftAccessToken(
+          decryptedRefreshToken
+        );
+        return {
+          accessToken: encrypt(tokenResponse.access_token),
+          refreshToken: tokenResponse.refresh_token
+            ? encrypt(tokenResponse.refresh_token)
+            : undefined,
+          expiresIn: tokenResponse.expires_in,
+          tokenType: tokenResponse.token_type,
+          scope: tokenResponse.scope,
+        };
+      },
     },
   },
   user: {

@@ -1,14 +1,33 @@
 import { prisma } from "@/lib/prisma";
 
-export async function findUserRoles(userId: string) {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { role: true },
+export async function findUserAuthDetails(userId: string) {
+  const userWithAccount = await prisma.user.findUnique({
+    where: {
+      id: userId,
+    },
+    select: {
+      role: true,
+      accounts: {
+        where: {
+          providerId: "microsoft",
+        },
+        select: {
+          accessToken: true,
+          refreshToken: true,
+        },
+      },
+    },
   });
 
-  if (!user) {
+  if (!userWithAccount) {
     throw new Error("User not found");
   }
 
-  return user.role;
+  const microsoftAccount = userWithAccount.accounts[0];
+
+  return {
+    role: userWithAccount.role,
+    accessToken: microsoftAccount?.accessToken ?? null,
+    refreshToken: microsoftAccount?.refreshToken ?? null,
+  };
 }
