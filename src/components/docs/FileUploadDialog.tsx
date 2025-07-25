@@ -1,7 +1,5 @@
 "use client";
 
-import type React from "react";
-
 import { useState, useRef, useCallback } from "react";
 import { X, Upload, FileText, File } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -20,19 +18,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { encryptFile } from "@/lib/crypt";
 
-interface FileItem {
+export interface FileItem {
   id: string;
   file: File;
   name: string;
   size: string;
   type: string;
+  encryptedData?: string;
+  originalSize?: number;
+  folderId?: string | null;
 }
 
-interface PathOption {
+interface FolderOption {
   id: string;
-  path: string;
-  displayPath: string;
+  name: string;
+  displayName: string;
 }
 
 interface FileUploadDialogProps {
@@ -41,9 +43,9 @@ interface FileUploadDialogProps {
   onUpload?: (files: FileItem[]) => void;
   title?: string;
   description?: string;
-  paths?: PathOption[];
-  selectedPath?: string;
-  onPathChange?: (path: string) => void;
+  folders?: FolderOption[];
+  selectedFolderId?: string;
+  onFolderChange?: (folderId: string) => void;
 }
 
 const getFileIcon = (type: string) => {
@@ -70,9 +72,9 @@ export default function FileUploadDialog({
   onUpload,
   title = "Upload Files",
   description = "Drag and drop files here or click to browse. Maximum file size is 250MB.",
-  paths = [],
-  selectedPath = "/",
-  onPathChange,
+  folders = [],
+  selectedFolderId = "root",
+  onFolderChange,
 }: FileUploadDialogProps) {
   const [files, setFiles] = useState<FileItem[]>([]);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -86,13 +88,11 @@ export default function FileUploadDialog({
       for (let i = 0; i < fileList.length; i++) {
         const file = fileList[i];
 
-        // Check file size (max 10MB)
-        if (file.size > 10 * 1024 * 1024) {
-          setError(`File "${file.name}" is too large. Maximum size is 10MB.`);
+        if (file.size > 250 * 1024 * 1024) {
+          setError(`File "${file.name}" is too large. Maximum size is 250MB.`);
           continue;
         }
 
-        // Check if file already exists
         const exists = files.some(
           (f) => f.name === file.name && f.size === formatFileSize(file.size)
         );
@@ -161,14 +161,38 @@ export default function FileUploadDialog({
     setError("");
   }, []);
 
-  const handleUpload = useCallback(() => {
-    if (onUpload) {
-      onUpload(files);
+  const handleUpload = useCallback(async () => {
+    if (!onUpload) return;
+
+    const folderId = selectedFolderId === "root" ? null : selectedFolderId;
+
+    try {
+      const encryptedFiles = await Promise.all(
+        files.map(async (fileItem) => {
+          const arrayBuffer = await fileItem.file.arrayBuffer();
+          const buffer = Buffer.from(arrayBuffer);
+
+          const encryptedData = encryptFile(buffer);
+
+          return {
+            ...fileItem,
+            folderId,
+            encryptedData,
+            originalSize: buffer.length,
+          };
+        })
+      );
+
+      onUpload(encryptedFiles);
+
+      setFiles([]);
+      setError("");
+      onOpenChange(false);
+    } catch (error) {
+      console.error("Encryption failed:", error);
+      setError("Failed to encrypt files. Please try again.");
     }
-    setFiles([]);
-    setError("");
-    onOpenChange(false);
-  }, [files, onUpload, onOpenChange]);
+  }, [files, onUpload, onOpenChange, selectedFolderId]);
 
   const handleCancel = useCallback(() => {
     setFiles([]);
@@ -176,7 +200,6 @@ export default function FileUploadDialog({
     onOpenChange(false);
   }, [onOpenChange]);
 
-  // Reset state when dialog closes
   const handleOpenChange = useCallback(
     (newOpen: boolean) => {
       if (!newOpen) {
@@ -191,23 +214,23 @@ export default function FileUploadDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
 
-        {paths.length > 0 && (
+        {folders.length > 0 && (
           <div className="flex items-center space-x-2">
             <label className="text-sm font-medium">Upload to 📁</label>
-            <Select value={selectedPath} onValueChange={onPathChange}>
+            <Select value={selectedFolderId} onValueChange={onFolderChange}>
               <SelectTrigger size="sm" className="bg-background min-w-30">
-                <SelectValue placeholder="Select path" />
+                <SelectValue placeholder="Select folder" />
               </SelectTrigger>
               <SelectContent>
-                {paths?.map((pathOption) => (
-                  <SelectItem key={pathOption.id} value={pathOption.path}>
-                    {pathOption.displayPath}
+                {folders.map((folder) => (
+                  <SelectItem key={folder.id} value={folder.id}>
+                    {folder.displayName}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -282,7 +305,6 @@ export default function FileUploadDialog({
             )}
           </div>
 
-          {/* Error Message */}
           {error && (
             <div className="text-sm text-destructive bg-destructive/10 p-2 rounded-md">
               {error}
@@ -290,7 +312,6 @@ export default function FileUploadDialog({
           )}
         </div>
 
-        {/* Footer Buttons - Only show when files exist */}
         {files.length > 0 && (
           <DialogFooter className="flex-row justify-end space-x-2">
             <Button variant="outline" onClick={handleCancel}>
@@ -306,4 +327,4 @@ export default function FileUploadDialog({
   );
 }
 
-export type { FileUploadDialogProps };
+export type { FileUploadDialogProps, FolderOption };

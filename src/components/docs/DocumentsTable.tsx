@@ -20,7 +20,9 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import { Skeleton } from "../ui/skeleton";
-import FileUploadDialog from "./FileUploadDialog";
+import FileUploadDialog, { FileItem, FolderOption } from "./FileUploadDialog";
+import { toast } from "sonner";
+import DeleteDialog from "../custom-ui/DeleteDialog";
 
 interface FolderInfo {
   id: string;
@@ -39,10 +41,9 @@ interface DocumentMetadata {
   url?: string;
 }
 
-interface PathOption {
+interface DeletionFailure {
   id: string;
-  path: string;
-  displayPath: string;
+  message: string;
 }
 
 export default function DocumentTable() {
@@ -52,84 +53,87 @@ export default function DocumentTable() {
   const [filteredDocuments, setFilteredDocuments] = useState<
     DocumentMetadata[]
   >([]);
-  const [selectedPath, setSelectedPath] = useState<string>("all");
-  const [uploadPath, setUploadPath] = useState<string>(() => "/");
+  const [currentFolderId, setCurrentFolderId] = useState<string>("all");
   const [includeNested, setIncludeNested] = useState(false);
   const [selectedDocuments, setSelectedDocuments] = useState<Set<string>>(
     new Set()
   );
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [folders, setFolders] = useState<FolderInfo[]>([]);
 
-  useEffect(() => {
-    const fetchDocuments = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch("/api/docs");
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const result = await response.json();
-        if (result.success) {
-          setDocuments(result.data);
-          if (Array.isArray(result.folders)) {
-            setFolders(result.folders);
-          }
-        } else {
-          throw new Error(result.error || "Failed to fetch documents");
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "An error occurred");
-      } finally {
-        setLoading(false);
+  const fetchDocuments = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch("/api/docs");
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-    };
+      const result = await response.json();
+      if (result.success) {
+        setDocuments(result.data);
+        if (Array.isArray(result.folders)) {
+          setFolders(result.folders);
+        }
+      } else {
+        throw new Error(result.error || "Failed to fetch documents");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchDocuments();
   }, []);
 
-  // Transform folder paths to match document paths format and create a mapping
-  const folderPathMapping = new Map(
-    folders.map((folder) => {
-      // Convert OneDrive path to DB path format
-      const dbPath =
-        folder.name === "rag-chatbot"
-          ? "/"
-          : `/${folder.fullPath.replace("rag-chatbot/", "")}`;
-      return [folder.fullPath, dbPath];
-    })
-  );
-
-  const uniquePaths: PathOption[] = [
-    { id: "root", path: "/", displayPath: "/" },
+  // Create folder options for both table and dialog
+  const folderOptions: FolderOption[] = [
+    { id: "root", name: "root", displayName: "/" },
     ...folders
-      .filter((folder) => folder.name !== "rag-chatbot") // Exclude root folder since it's already added
-      .map((folder) => {
-        const dbPath = `/${folder.fullPath.replace("rag-chatbot/", "")}`;
-        return {
-          id: folder.id,
-          path: dbPath,
-          displayPath: dbPath,
-        };
-      }),
+      .filter((folder) => folder.name !== "rag-chatbot")
+      .map((folder) => ({
+        id: folder.id,
+        name: folder.name,
+        displayName: `/${folder.fullPath.replace("rag-chatbot/", "")}`,
+      })),
   ];
+
+  // Create a mapping from folder ID to path for filtering documents
+  const folderIdToPath = new Map<string, string>([
+    ["root", "/"],
+    ...folders
+      .filter((folder) => folder.name !== "rag-chatbot")
+      .map(
+        (folder) =>
+          [folder.id, `/${folder.fullPath.replace("rag-chatbot/", "")}`] as [
+            string,
+            string
+          ]
+      ),
+  ]);
 
   useEffect(() => {
     let filtered = documents;
 
-    if (selectedPath !== "all") {
-      const dbPath = folderPathMapping.get(selectedPath);
-      if (dbPath) {
+    if (currentFolderId !== "all") {
+      const targetPath = folderIdToPath.get(currentFolderId);
+      if (targetPath) {
         if (includeNested) {
-          filtered = documents.filter((doc) => doc.path?.startsWith(dbPath));
+          filtered = documents.filter((doc) =>
+            doc.path?.startsWith(targetPath)
+          );
         } else {
-          filtered = documents.filter((doc) => doc.path === dbPath);
+          filtered = documents.filter((doc) => doc.path === targetPath);
         }
       }
     }
 
     setFilteredDocuments(filtered);
     setSelectedDocuments(new Set());
-  }, [documents, selectedPath, includeNested, folders]);
+  }, [documents, currentFolderId, includeNested]);
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
@@ -149,28 +153,162 @@ export default function DocumentTable() {
     setSelectedDocuments(newSelected);
   };
 
-  const handleTablePathChange = (path: string) => {
-    setSelectedPath(path);
-    // Convert OneDrive path to DB path for upload
-    if (path === "all") {
-      setUploadPath("/");
-    } else {
-      const dbPath = folderPathMapping.get(path);
-      setUploadPath(dbPath || "/");
+  // Get the dialog folder ID - if table shows "all", default to root
+  const getDialogFolderId = (): string => {
+    return currentFolderId === "all" ? "root" : currentFolderId;
+  };
+
+  // Handle folder change from dialog - sync back to table
+  const handleDialogFolderChange = (folderId: string) => {
+    setCurrentFolderId(folderId);
+  };
+
+  const handleUpload = async (encryptedFiles: FileItem[]) => {
+    console.log(`Starting upload of ${encryptedFiles.length} files...`);
+
+    try {
+      const loadingToast = toast.loading(
+        `Uploading ${encryptedFiles.length} files...`
+      );
+
+      const filesToUpload = encryptedFiles.map((file) => ({
+        id: file.id,
+        name: file.name,
+        type: file.type,
+        encryptedData: file.encryptedData,
+        originalSize: file.originalSize,
+      }));
+
+      const response = await fetch("/api/docs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          files: filesToUpload,
+          folderId: encryptedFiles[0]?.folderId,
+        }),
+      });
+
+      const result = await response.json();
+      toast.dismiss(loadingToast);
+
+      if (!response.ok) {
+        throw new Error(result.error || "Upload failed");
+      }
+
+      const { summary } = result;
+      let summaryMessage = "";
+
+      if (summary.successful > 0) {
+        summaryMessage += `${summary.successful} uploaded`;
+      }
+      if (summary.skipped > 0) {
+        summaryMessage += `${summaryMessage ? ", " : ""}${
+          summary.skipped
+        } skipped`;
+      }
+      if (summary.failed > 0) {
+        summaryMessage += `${summaryMessage ? ", " : ""}${
+          summary.failed
+        } failed`;
+      }
+
+      if (summary.successful > 0) {
+        toast.success(`Upload completed: ${summaryMessage}`);
+      } else if (summary.skipped === summary.total) {
+        toast.warning(`All files were duplicates: ${summaryMessage}`);
+      } else {
+        toast.error(`Upload failed: ${summaryMessage}`);
+      }
+
+      if (summary.duplicates.length > 0) {
+        toast.warning(
+          `Duplicate files detected: ${summary.duplicates.join(
+            ", "
+          )}. Use update feature to replace existing files.`,
+          { duration: 8000 }
+        );
+      }
+
+      if (summary.successful > 0) {
+        toast.success(
+          "Files sent to server! They are now being processed and indexed. This may take a minute.",
+          {
+            duration: 8000, // Make it last longer so the user has time to read it
+            icon: "⏳", // An hourglass or clock icon can be very effective
+          }
+        );
+      }
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast.error(
+        `Upload failed: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
     }
   };
 
-  const handlePathChange = (path: string) => {
-    setUploadPath(path);
-  };
+  const handleDelete = async (fileIds: string[]) => {
+    if (!fileIds || fileIds.length === 0) {
+      toast.error("No files selected for deletion.");
+      return;
+    }
 
-  const handleUploadClick = () => {
-    setDialogOpen(true);
-  };
+    const loadingToast = toast.loading(`Deleting ${fileIds.length} file(s)...`);
 
-  const handleUpload = (files: any[]) => {
-    console.log(`Uploading ${files.length} files:`, files);
-    // Handle the uploaded files here
+    try {
+      const response = await fetch("/api/docs", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fileIds: fileIds }),
+      });
+
+      const result = await response.json();
+      toast.dismiss(loadingToast);
+
+      if (!response.ok) {
+        throw new Error(
+          result.error || `Request failed with status ${response.status}`
+        );
+      }
+
+      const { deletedCount, failedCount, failures } = result;
+
+      let reloaded = false;
+
+      if (failedCount > 0 && failures) {
+        const failureDetails = (failures as DeletionFailure[])
+          .map((f) => `  - File ID ${f.id}: ${f.message}`)
+          .join("\n");
+
+        console.error(
+          `Failed to delete ${failedCount} file(s):\n${failureDetails}`
+        );
+
+        toast.error(
+          `Could not delete ${failedCount} file(s). Check the console for details.`,
+          { duration: 8000 }
+        );
+      }
+
+      if (deletedCount > 0) {
+        toast.success(`${deletedCount} file(s) deleted successfully.`);
+
+        fetchDocuments();
+      }
+
+      if (deletedCount === 0 && failedCount === 0 && !reloaded) {
+        toast.info("No files were deleted.");
+      }
+    } catch (error) {
+      toast.dismiss(loadingToast);
+      console.error("An error occurred during deletion:", error);
+      toast.error(
+        `Deletion failed: ${
+          error instanceof Error ? error.message : "An unknown error occurred"
+        }`
+      );
+    }
   };
 
   const isAllSelected =
@@ -201,23 +339,17 @@ export default function DocumentTable() {
     <div className="space-y-4">
       <div className="flex items-center gap-4">
         <div>
-          <Select value={selectedPath} onValueChange={handleTablePathChange}>
+          <Select value={currentFolderId} onValueChange={setCurrentFolderId}>
             <SelectTrigger className="bg-background min-w-30">
               <SelectValue placeholder="Select folder" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Folders</SelectItem>
-              {folders.map((folder) => {
-                const dbPath =
-                  folder.name === "rag-chatbot"
-                    ? "/"
-                    : `/${folder.fullPath.replace("rag-chatbot/", "")}`;
-                return (
-                  <SelectItem key={folder.id} value={folder.fullPath}>
-                    {dbPath}
-                  </SelectItem>
-                );
-              })}
+              {folderOptions.map((folder) => (
+                <SelectItem key={folder.id} value={folder.id}>
+                  {folder.displayName}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -236,19 +368,18 @@ export default function DocumentTable() {
         </div>
 
         <Button
-          onClick={handleUploadClick}
+          onClick={() => setUploadDialogOpen(true)}
           className="bg-aquamarine-50 hover:bg-aquamarine-800 dark:bg-aquamarine dark:hover:bg-aquamarine-50 text-black-2 flex items-center gap-2">
           <Plus className="h-4 w-4" />
-          {/* Hide on small screens, show from sm+ */}
           <span className="hidden sm:inline">Add Document</span>
         </Button>
 
         <div className="ml-auto">
           <Button
+            onClick={() => setDeleteDialogOpen(true)}
             className="text-white bg-red-500 hover:bg-red-600 flex items-center gap-2"
             disabled={selectedDocuments.size === 0}>
             <Trash2 className="h-4 w-4" />
-            {/* Show only count (x) on mobile, full text on larger screens */}
             <span className="sm:hidden">({selectedDocuments.size})</span>
             <span className="hidden sm:inline">
               Delete Selected ({selectedDocuments.size})
@@ -331,14 +462,23 @@ export default function DocumentTable() {
       </div>
 
       <FileUploadDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
+        open={uploadDialogOpen}
+        onOpenChange={setUploadDialogOpen}
         onUpload={handleUpload}
         title={`Upload Documents`}
         description="Upload documents to the knowledge base. Maximum file size is 250MB."
-        paths={uniquePaths}
-        selectedPath={uploadPath}
-        onPathChange={handlePathChange}
+        folders={folderOptions}
+        selectedFolderId={getDialogFolderId()}
+        onFolderChange={handleDialogFolderChange}
+      />
+
+      <DeleteDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onDelete={handleDelete}
+        title="Delete Documents"
+        id={[...selectedDocuments]}
+        itemType="document"
       />
     </div>
   );
