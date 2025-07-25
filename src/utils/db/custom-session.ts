@@ -12,8 +12,7 @@ export async function findUserAuthDetails(userId: string) {
           providerId: "microsoft",
         },
         select: {
-          accessToken: true,
-          refreshToken: true,
+          accountId: true,
         },
       },
     },
@@ -27,7 +26,6 @@ export async function findUserAuthDetails(userId: string) {
 
   return {
     role: userWithAccount.role,
-    accessToken: microsoftAccount?.accessToken ?? null,
-    refreshToken: microsoftAccount?.refreshToken ?? null,
+    accountId: microsoftAccount?.accountId ?? null,
   };
 }

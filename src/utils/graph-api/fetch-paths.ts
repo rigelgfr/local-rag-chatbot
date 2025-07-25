@@ -53,10 +53,8 @@ export async function collectAllSubFolders(
 }
 
 export async function fetchOneDriveFolders(
-  encryptedAccessToken: string
+  accessToken: string
 ): Promise<FolderInfo[]> {
-  const decryptedToken = await decrypt(encryptedAccessToken);
-
   const targetFolderId =
     process.env.RAG_CHATBOT_FOLDER_ID || "folder-id-placeholder";
   const targetFolderName = process.env.RAG_CHATBOT_FOLDER_NAME || "rag-chatbot";
@@ -77,7 +75,7 @@ export async function fetchOneDriveFolders(
   const subFolders = await collectAllSubFolders(
     targetFolderId,
     targetFolderName,
-    decryptedToken
+    accessToken
   );
 
   allFolders.push(...subFolders);

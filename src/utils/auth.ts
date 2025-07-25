@@ -2,30 +2,32 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { customSession } from "better-auth/plugins";
 import { authClient } from "@/lib/auth-client";
-import { findUserAuthDetails } from "./db";
+import { findUserAuthDetails } from "./db/custom-session";
 import { prisma } from "@/lib/prisma";
-import { encrypt, decrypt } from "@/lib/crypt";
-import { refreshMicrosoftAccessToken } from "./graph-api/refresh-access-token";
+import { encrypt } from "@/lib/crypt";
 
 export const auth = betterAuth({
-  databaseHooks: {
-    account: {
-      create: {
-        async before(account) {
-          const withEncryptedTokens = { ...account };
-          if (account.accessToken) {
-            withEncryptedTokens.accessToken = encrypt(account.accessToken);
-          }
-          if (account.refreshToken) {
-            withEncryptedTokens.refreshToken = encrypt(account.refreshToken);
-          }
-          return {
-            data: withEncryptedTokens,
-          };
-        },
-      },
-    },
-  },
+  // databaseHooks: {
+  //   account: {
+  //     create: {
+  //       before(account) {
+  //         const withEncryptedTokens = { ...account };
+
+  //         if (account.accessToken) {
+  //           const encryptedAccessToken = encrypt(account.accessToken);
+  //           withEncryptedTokens.accessToken = encryptedAccessToken;
+  //         }
+  //         if (account.refreshToken) {
+  //           const encryptedRefreshToken = encrypt(account.refreshToken);
+  //           withEncryptedTokens.refreshToken = encryptedRefreshToken;
+  //         }
+  //         return Promise.resolve({
+  //           data: withEncryptedTokens,
+  //         });
+  //       },
+  //     },
+  //   },
+  // },
   plugins: [
     customSession(async ({ user, session }) => {
       const authDetails = await findUserAuthDetails(session.userId);
@@ -35,8 +37,7 @@ export const auth = betterAuth({
           roles: authDetails.role,
           ...user,
         },
-        accessToken: authDetails.accessToken,
-        refreshToken: authDetails.refreshToken,
+        accountId: authDetails.accountId,
       };
     }),
   ],
@@ -55,21 +56,6 @@ export const auth = betterAuth({
         "email",
         "https://graph.microsoft.com/Files.ReadWrite",
       ],
-      async refreshAccessToken(refreshToken) {
-        const decryptedRefreshToken = decrypt(refreshToken);
-        const tokenResponse = await refreshMicrosoftAccessToken(
-          decryptedRefreshToken
-        );
-        return {
-          accessToken: encrypt(tokenResponse.access_token),
-          refreshToken: tokenResponse.refresh_token
-            ? encrypt(tokenResponse.refresh_token)
-            : undefined,
-          expiresIn: tokenResponse.expires_in,
-          tokenType: tokenResponse.token_type,
-          scope: tokenResponse.scope,
-        };
-      },
     },
   },
   user: {
