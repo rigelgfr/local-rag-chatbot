@@ -22,7 +22,13 @@ export default function ProfilePic() {
   const userRole = data?.user.roles;
 
   const handleAdminClick = () => {
-    router.push("/admin/docs");
+    if (userRole === "ADMIN") {
+      router.push("/admin/users");
+    } else if (userRole === "MOD") {
+      router.push("/admin/docs");
+    } else {
+      router.push("/error/unauthorized");
+    }
   };
 
   const onLogoutClick = async () => {
