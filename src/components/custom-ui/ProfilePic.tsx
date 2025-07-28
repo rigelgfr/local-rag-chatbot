@@ -1,5 +1,3 @@
-// --- MODIFIED FILE: ProfilePic.tsx ---
-
 "use client";
 
 import {

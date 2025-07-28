@@ -10,7 +10,6 @@ import {
   deleteFilesFromOneDrive,
   uploadFilesToOneDrive,
 } from "@/utils/graph-api/file-utils";
-import { file } from "better-auth";
 
 export async function GET() {
   try {
