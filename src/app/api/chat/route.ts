@@ -1,6 +1,8 @@
+import { prisma } from "@/lib/prisma";
+import { auth } from "@/utils/auth";
+import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 
-// Configuration - Update these values for your n8n setup
 const N8N_WEBHOOK_URL =
   process.env.N8N_WEBHOOK_URL || "http://localhost:5678/webhook/chat";
 const N8N_BEARER_TOKEN =
@@ -11,7 +13,10 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { sessionId, chatInput } = body;
 
-    // Validate required fields
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
     if (!sessionId || !chatInput) {
       return NextResponse.json(
         { error: "sessionId and chatInput are required" },
@@ -19,9 +24,32 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (!session || !session.userId) {
+      return NextResponse.json(
+        { error: "User not authenticated" },
+        { status: 401 }
+      );
+    }
+
+    await prisma.chat_sessions.upsert({
+      where: {
+        user_id_session_id: {
+          user_id: session.userId,
+          session_id: sessionId,
+        },
+      },
+      update: {
+        last_online_at: new Date(),
+      },
+      create: {
+        user_id: session.userId,
+        session_id: sessionId,
+        last_online_at: new Date(),
+      },
+    });
+
     console.log("Sending to n8n:", { sessionId, chatInput });
 
-    // Send request to n8n webhook
     const response = await fetch(N8N_WEBHOOK_URL, {
       method: "POST",
       headers: {
@@ -47,10 +75,8 @@ export async function POST(request: NextRequest) {
     const data = await response.json();
     console.log("n8n response:", JSON.stringify(data, null, 2));
 
-    // Handle different response structures
     let output = "";
     if (Array.isArray(data) && data.length > 0) {
-      // n8n returns an array, get the first item's output
       const firstItem = data[0];
       if (firstItem.output) {
         output = firstItem.output;
@@ -71,7 +97,6 @@ export async function POST(request: NextRequest) {
         "I received your message but had trouble processing the response format.";
     }
 
-    // Return the response in the expected format
     return NextResponse.json({ output });
   } catch (error) {
     console.error("API route error:", error);

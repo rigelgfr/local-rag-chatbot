@@ -21,6 +21,7 @@ model User {
   role          Role      @default(USER)
   accounts      Account[]
   sessions      Session[]
+  chat_sessions chat_sessions[]
 
   @@map("user")
 }
@@ -92,6 +93,17 @@ model document_metadata {
   path             String?
   last_modified_by String?
   last_modified_at DateTime? @db.Timestamp(6)
+}
+
+model chat_sessions {
+  user_id    String
+  session_id String   @db.VarChar(255)
+  created_at DateTime @default(now())
+  last_online_at DateTime @default(now())
+
+  @@id([user_id, session_id])
+
+  user User @relation(fields: [user_id], references: [id])
 }
 
 enum Role {
