@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Search } from "lucide-react";
 import {
   Table,
   TableHeader,
@@ -19,10 +19,12 @@ import {
   TableHead,
   TableCell,
 } from "@/components/ui/table";
-import { Skeleton } from "../ui/skeleton";
+import { Skeleton } from "../../ui/skeleton";
 import FileUploadDialog, { FileItem, FolderOption } from "./FileUploadDialog";
 import { toast } from "sonner";
-import DeleteDialog from "../custom-ui/DeleteDialog";
+import DeleteDialog from "../../custom-ui/DeleteDialog";
+import { DeletionFailure } from "@/types/table";
+import { Input } from "@/components/ui/input";
 
 interface FolderInfo {
   id: string;
@@ -41,11 +43,6 @@ interface DocumentMetadata {
   url?: string;
 }
 
-interface DeletionFailure {
-  id: string;
-  message: string;
-}
-
 export default function DocumentTable() {
   const [documents, setDocuments] = useState<DocumentMetadata[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,6 +55,7 @@ export default function DocumentTable() {
   const [selectedDocuments, setSelectedDocuments] = useState<Set<string>>(
     new Set()
   );
+  const [searchQuery, setSearchQuery] = useState("");
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [folders, setFolders] = useState<FolderInfo[]>([]);
@@ -66,10 +64,20 @@ export default function DocumentTable() {
     try {
       setLoading(true);
       const response = await fetch("/api/docs");
+
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        let errorMessage = `HTTP error! status: ${response.status}`;
+        try {
+          const errorData = await response.json();
+          if (errorData.error) {
+            errorMessage = errorData.error;
+          }
+        } catch {}
+        throw new Error(errorMessage);
       }
+
       const result = await response.json();
+
       if (result.success) {
         setDocuments(result.data);
         if (Array.isArray(result.folders)) {
@@ -131,9 +139,19 @@ export default function DocumentTable() {
       }
     }
 
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        (doc) =>
+          doc.title.toLowerCase().includes(query) ||
+          (doc.last_modified_by &&
+            doc.last_modified_by.toLowerCase().includes(query))
+      );
+    }
+
     setFilteredDocuments(filtered);
     setSelectedDocuments(new Set());
-  }, [documents, currentFolderId, includeNested]);
+  }, [documents, currentFolderId, includeNested, searchQuery]);
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
@@ -145,6 +163,7 @@ export default function DocumentTable() {
 
   const handleSelectDocument = (docId: string, checked: boolean) => {
     const newSelected = new Set(selectedDocuments);
+
     if (checked) {
       newSelected.add(docId);
     } else {
@@ -322,7 +341,7 @@ export default function DocumentTable() {
     return (
       <div className="space-y-4">
         <Skeleton className="h-12" />
-        <Skeleton className="h-48" />
+        <Skeleton className="h-60" />
       </div>
     );
   }
@@ -365,6 +384,16 @@ export default function DocumentTable() {
             className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
             Include nested files
           </label>
+        </div>
+
+        <div className="relative flex-1 max-w-[250px]">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+          <Input
+            placeholder="Search by title or modifier..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
         </div>
 
         <Button
