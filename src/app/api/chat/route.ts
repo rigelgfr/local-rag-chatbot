@@ -140,8 +140,8 @@ export async function POST(request: NextRequest) {
 
     const { allowed, reset } = checkRateLimit({
       key: rateLimitKey,
-      limit: 2, // e.g. 10 requests
-      windowInSeconds: 60, // per 60 seconds
+      limit: 10,
+      windowInSeconds: 20,
     });
 
     if (!allowed) {
