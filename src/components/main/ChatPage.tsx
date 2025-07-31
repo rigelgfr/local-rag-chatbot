@@ -68,6 +68,7 @@ export default function ChatPage() {
       }
 
       setMessages([]);
+      toast.success("Chat successfully reset.");
       setIsResetting(false);
     } catch (err) {
       console.error("Reset failed:", err);
