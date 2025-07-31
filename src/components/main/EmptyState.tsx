@@ -1,5 +1,4 @@
 import { authClient } from "@/lib/auth-client";
-import { Bot } from "lucide-react";
 
 export default function EmptyState() {
   const { data: session } = authClient.useSession();
