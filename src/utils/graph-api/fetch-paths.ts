@@ -1,5 +1,3 @@
-import { decrypt } from "@/lib/crypt";
-
 interface FolderInfo {
   id: string;
   name: string;
@@ -30,7 +28,7 @@ export async function collectAllSubFolders(
   }
 
   const data = await res.json();
-  let folders: FolderInfo[] = [];
+  const folders: FolderInfo[] = [];
 
   for (const item of data.value) {
     if (item.folder) {

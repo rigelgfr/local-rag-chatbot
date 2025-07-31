@@ -170,9 +170,9 @@ export default function FileUploadDialog({
       const encryptedFiles = await Promise.all(
         files.map(async (fileItem) => {
           const arrayBuffer = await fileItem.file.arrayBuffer();
-          const buffer = Buffer.from(arrayBuffer);
+          const buffer = new Uint8Array(arrayBuffer); // Use Uint8Array instead of Buffer
 
-          const encryptedData = encryptFile(buffer);
+          const encryptedData = await encryptFile(buffer); // Add await here
 
           return {
             ...fileItem,

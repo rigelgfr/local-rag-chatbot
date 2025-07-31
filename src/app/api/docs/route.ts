@@ -10,18 +10,11 @@ import {
   deleteFilesFromOneDrive,
   uploadFilesToOneDrive,
 } from "@/utils/graph-api/file-utils";
+import { getMicrosoftAccessToken } from "@/utils/graph-api/get-access-token";
 
 export async function GET() {
   try {
     const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-
-    const { accessToken } = await auth.api.getAccessToken({
-      body: {
-        providerId: "microsoft",
-        userId: session?.accountId,
-      },
       headers: await headers(),
     });
 
@@ -35,20 +28,25 @@ export async function GET() {
         { error: "Unauthorized. MOD or ADMIN role required." },
         { status: 403 }
       );
-    } else if (!accessToken) {
+    }
+
+    const tokenResult = await getMicrosoftAccessToken(session.accountId);
+
+    if (tokenResult.error || !tokenResult.accessToken) {
+      console.error("Token error:", tokenResult.error);
       return NextResponse.json(
-        { error: "Access token not found in session." },
+        { error: "Access token not found or expired." },
         { status: 401 }
       );
     }
 
-    // Fetch documents from database
+    console.log("Access token retrieved successfully");
+
     const documents = await prisma.document_metadata.findMany({
       orderBy: { last_modified_at: "desc" },
     });
 
-    // Fetch available folders from OneDrive
-    const folders = await fetchOneDriveFolders(accessToken);
+    const folders = await fetchOneDriveFolders(tokenResult.accessToken);
 
     const formattedDocuments = documents.map((doc) => ({
       ...doc,
@@ -79,14 +77,6 @@ export async function POST(request: Request) {
       headers: await headers(),
     });
 
-    const { accessToken } = await auth.api.getAccessToken({
-      body: {
-        providerId: "microsoft",
-        userId: session?.accountId,
-      },
-      headers: await headers(),
-    });
-
     if (!session || !session.user) {
       return NextResponse.json(
         { error: "Authentication required" },
@@ -97,7 +87,11 @@ export async function POST(request: Request) {
         { error: "Unauthorized. MOD or ADMIN role required." },
         { status: 403 }
       );
-    } else if (!accessToken) {
+    }
+
+    const { accessToken } = await getMicrosoftAccessToken(session.accountId);
+
+    if (!accessToken) {
       return NextResponse.json(
         { error: "Access token not found in session." },
         { status: 401 }
@@ -118,22 +112,22 @@ export async function POST(request: Request) {
     const duplicates: string[] = [];
     let successful = 0;
     let failed = 0;
-    let skipped = 0;
+    const skipped = 0;
 
     const uploadFiles: {
       originalname: string;
       mimetype: string;
-      buffer: Buffer;
+      buffer: Uint8Array;
     }[] = [];
 
     for (const fileData of files) {
       try {
-        const decryptedBuffer = decryptFile(fileData.encryptedData);
+        const decryptedBuffer = await decryptFile(fileData.encryptedData);
 
         uploadFiles.push({
           originalname: fileData.name,
           mimetype: fileData.type,
-          buffer: Buffer.from(decryptedBuffer),
+          buffer: decryptedBuffer, // decryptedBuffer is already a Uint8Array
         });
       } catch (decryptError) {
         console.error(`Error decrypting file ${fileData.name}:`, decryptError);
@@ -226,11 +220,6 @@ export async function DELETE(request: Request) {
   try {
     const session = await auth.api.getSession({ headers: await headers() });
 
-    const { accessToken } = await auth.api.getAccessToken({
-      body: { providerId: "microsoft", userId: session?.accountId },
-      headers: await headers(),
-    });
-
     if (!session || !session.user) {
       return NextResponse.json(
         { error: "Authentication required" },
@@ -241,7 +230,11 @@ export async function DELETE(request: Request) {
         { error: "Unauthorized. MOD or ADMIN role required." },
         { status: 403 }
       );
-    } else if (!accessToken) {
+    }
+
+    const { accessToken } = await getMicrosoftAccessToken(session.accountId);
+
+    if (!accessToken) {
       return NextResponse.json(
         { error: "Access token not found in session." },
         { status: 401 }

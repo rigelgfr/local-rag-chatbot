@@ -32,5 +32,5 @@ export interface UploadResponse {
 export interface UploadFile {
   originalname: string;
   mimetype: string;
-  buffer: Buffer;
+  buffer: Uint8Array;
 }

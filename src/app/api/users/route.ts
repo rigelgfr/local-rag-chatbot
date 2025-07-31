@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/utils/auth";
+import { getMicrosoftAccessToken } from "@/utils/graph-api/get-access-token";
 import { formatToWIB } from "@/utils/timezone";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
@@ -7,14 +8,6 @@ import { NextResponse } from "next/server";
 export async function GET() {
   try {
     const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-
-    const { accessToken } = await auth.api.getAccessToken({
-      body: {
-        providerId: "microsoft",
-        userId: session?.accountId,
-      },
       headers: await headers(),
     });
 
@@ -28,7 +21,11 @@ export async function GET() {
         { error: "Unauthorized. ADMIN role required." },
         { status: 403 }
       );
-    } else if (!accessToken) {
+    }
+
+    const { accessToken } = await getMicrosoftAccessToken(session.accountId);
+
+    if (!accessToken) {
       return NextResponse.json(
         { error: "Access token not found in session." },
         { status: 401 }
@@ -67,14 +64,6 @@ export async function PATCH(request: Request) {
       headers: await headers(),
     });
 
-    const { accessToken } = await auth.api.getAccessToken({
-      body: {
-        providerId: "microsoft",
-        userId: session?.accountId,
-      },
-      headers: await headers(),
-    });
-
     if (!session || !session.user) {
       return NextResponse.json(
         { error: "Authentication required" },
@@ -85,7 +74,11 @@ export async function PATCH(request: Request) {
         { error: "Unauthorized. ADMIN role required." },
         { status: 403 }
       );
-    } else if (!accessToken) {
+    }
+
+    const { accessToken } = await getMicrosoftAccessToken(session.accountId);
+
+    if (!accessToken) {
       return NextResponse.json(
         { error: "Access token not found in session." },
         { status: 401 }
@@ -142,14 +135,6 @@ export async function DELETE(request: Request) {
       headers: await headers(),
     });
 
-    const { accessToken } = await auth.api.getAccessToken({
-      body: {
-        providerId: "microsoft",
-        userId: session?.accountId,
-      },
-      headers: await headers(),
-    });
-
     if (!session || !session.user) {
       return NextResponse.json(
         { error: "Authentication required" },
@@ -160,7 +145,11 @@ export async function DELETE(request: Request) {
         { error: "Unauthorized. ADMIN role required." },
         { status: 403 }
       );
-    } else if (!accessToken) {
+    }
+
+    const { accessToken } = await getMicrosoftAccessToken(session.accountId);
+
+    if (!accessToken) {
       return NextResponse.json(
         { error: "Access token not found in session." },
         { status: 401 }
