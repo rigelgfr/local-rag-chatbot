@@ -1,17 +1,15 @@
-"use client";
-
 import AdminPageSection from "@/components/custom-ui/AdminPageSection";
 import DocumentTable from "@/components/admin/docs/DocumentsTable";
-import { authClient } from "@/lib/auth-client";
 import { redirect } from "next/navigation";
+import { auth } from "@/utils/auth";
+import { headers } from "next/headers";
 
-export default function Page() {
-  const { data: session } = authClient.useSession();
+export default async function Page() {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
 
-  if (!session) {
-    console.log("Error: no session found");
-    redirect("/");
-  } else if (session.user.roles === "USER") {
+  if (!session || session.user.roles === "USER") {
     console.log("Error: unauthorized access");
     redirect("/");
   }

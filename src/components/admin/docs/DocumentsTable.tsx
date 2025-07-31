@@ -293,7 +293,7 @@ export default function DocumentTable() {
 
       const { deletedCount, failedCount, failures } = result;
 
-      let reloaded = false;
+      const reloaded = false;
 
       if (failedCount > 0 && failures) {
         const failureDetails = (failures as DeletionFailure[])
