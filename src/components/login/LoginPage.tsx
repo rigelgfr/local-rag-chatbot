@@ -6,6 +6,7 @@ import { Loading } from "@/components/custom-ui/Loading";
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
+  const desc = "Login with ALVA's Microsoft account to get started.";
 
   const onLoginClick = async () => {
     setIsLoading(true);
@@ -22,9 +23,7 @@ export default function LoginPage() {
         <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
           Welcome to ALVA AI
         </h1>
-        <p className="text-muted-foreground text-sm sm:text-lg">
-          Login with ALVA's Microsoft account to get started.
-        </p>
+        <p className="text-muted-foreground text-sm sm:text-lg">{desc}</p>
       </div>
 
       <div className="w-full space-y-4">
