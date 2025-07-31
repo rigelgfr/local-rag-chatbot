@@ -1,27 +1,23 @@
-"use client";
-
-import UsersTable from "@/components/admin/users/UsersTable";
-import AdminPageSection from "@/components/custom-ui/AdminPageSection";
-import { authClient } from "@/lib/auth-client";
+import UsersPage from "@/components/admin/users/UsersPage";
+import { auth } from "@/utils/auth";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
-export default function Page() {
-  const { data: session } = authClient.useSession();
+export default async function Page() {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
 
   if (!session) {
     console.log("Error: no session found");
     redirect("/");
-  } else if (session.user.roles != "ADMIN" && session.user.roles === "MOD") {
+  } else if (session.user.roles === "MOD") {
     console.log("Error: unauthorized access");
     redirect("/admin/docs");
+  } else if (session.user.roles === "USER") {
+    console.log("Error: unauthorized access");
+    redirect("/");
   }
 
-  const desc =
-    "Manage the chatbot users here. Add admins and mods by updating the users' role.";
-
-  return (
-    <AdminPageSection title="Users" desc={desc}>
-      <UsersTable />
-    </AdminPageSection>
-  );
+  return <UsersPage />;
 }
