@@ -29,6 +29,44 @@ export const auth = betterAuth({
           });
         },
       },
+      update: {
+        async before(account) {
+          const existingAccount = await prisma.account.findFirst({
+            where: {
+              accountId: account.accountId,
+              providerId: account.providerId || "microsoft",
+            },
+            select: {
+              accessToken: true,
+              refreshToken: true,
+            },
+          });
+
+          const withEncryptedTokens = { ...account };
+
+          if (
+            account.accessToken &&
+            existingAccount?.accessToken !== account.accessToken
+          ) {
+            withEncryptedTokens.accessToken = await encrypt(
+              account.accessToken
+            );
+          }
+
+          if (
+            account.refreshToken &&
+            existingAccount?.refreshToken !== account.refreshToken
+          ) {
+            withEncryptedTokens.refreshToken = await encrypt(
+              account.refreshToken
+            );
+          }
+
+          return {
+            data: withEncryptedTokens,
+          };
+        },
+      },
     },
   },
   plugins: [
