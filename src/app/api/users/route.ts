@@ -23,15 +23,6 @@ export async function GET() {
       );
     }
 
-    const { accessToken } = await getMicrosoftAccessToken(session.accountId);
-
-    if (!accessToken) {
-      return NextResponse.json(
-        { error: "Access token not found in session." },
-        { status: 401 }
-      );
-    }
-
     const users = await prisma.user.findMany({
       orderBy: { createdAt: "desc" },
     });
@@ -73,15 +64,6 @@ export async function PATCH(request: Request) {
       return NextResponse.json(
         { error: "Unauthorized. ADMIN role required." },
         { status: 403 }
-      );
-    }
-
-    const { accessToken } = await getMicrosoftAccessToken(session.accountId);
-
-    if (!accessToken) {
-      return NextResponse.json(
-        { error: "Access token not found in session." },
-        { status: 401 }
       );
     }
 
@@ -144,15 +126,6 @@ export async function DELETE(request: Request) {
       return NextResponse.json(
         { error: "Unauthorized. ADMIN role required." },
         { status: 403 }
-      );
-    }
-
-    const { accessToken } = await getMicrosoftAccessToken(session.accountId);
-
-    if (!accessToken) {
-      return NextResponse.json(
-        { error: "Access token not found in session." },
-        { status: 401 }
       );
     }
 

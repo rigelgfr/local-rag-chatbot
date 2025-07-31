@@ -35,15 +35,6 @@ export async function GET() {
       );
     }
 
-    const { accessToken } = await getMicrosoftAccessToken(session.accountId);
-
-    if (!accessToken) {
-      return NextResponse.json(
-        { error: "Access token not found in session." },
-        { status: 401 }
-      );
-    }
-
     // Query all unique chat sessions with user data
     const chatSessions = await prisma.chat_sessions.findMany({
       select: {
