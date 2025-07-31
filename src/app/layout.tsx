@@ -8,8 +8,8 @@ import Header from "@/components/custom-ui/Header";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "ALVA AI Assistant",
-  description: "Simple chat interface for AI assistant",
+  title: "AI-DOCU | ALVA's AI assistant",
+  description: "AI-DOCU is ALVA's AI chatbot built to answer your questions.",
 };
 
 export default function RootLayout({

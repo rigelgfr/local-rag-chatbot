@@ -8,6 +8,7 @@ import { headers } from "next/headers";
 import { Suspense } from "react";
 
 import LoginButton from "./MSLoginButton";
+import Image from "next/image";
 
 async function AuthSection() {
   const session = await auth.api.getSession({
@@ -31,9 +32,13 @@ export default function Header({ size = "short" }: HeaderProps) {
   return (
     <header className="bg-white dark:bg-background border-b border-gray-200 dark:border-aquamarine px-4 py-3">
       <div className={`${containerClass} mx-auto flex gap-2 items-center`}>
-        <Link href="/" className="flex select-none">
-          <Bot className="w-6 h-6 text-aquamarine-50 dark:text-aquamarine mr-1" />
-          <h1 className="text-xl font-semibold text-foreground">ALVA AI</h1>
+        <Link href="/" className="flex items-center select-none">
+          <img
+            src="/logo/logo1.png"
+            className="rounded-full h-6 mr-1"
+            alt="Logo ALVA"
+          />
+          <h1 className="text-xl font-semibold text-foreground">AI-DOCU</h1>
         </Link>
 
         <ThemeToggle className="ml-auto" />

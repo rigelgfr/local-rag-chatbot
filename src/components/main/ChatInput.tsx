@@ -81,7 +81,7 @@ export default function ChatInput({
           </Button>
 
           <p className="text-[10px] text-center text-gray-400 self-end ml-auto">
-            ALVA AI can make mistakes. Please consult the appropriate staff for
+            AI-DOCU can make mistakes. Please consult the appropriate staff for
             the most accurate and up-to-date information.
           </p>
 

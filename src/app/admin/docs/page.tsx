@@ -15,7 +15,7 @@ export default async function Page() {
   }
 
   const desc =
-    "Manage ALVA AI's knowledge base by adding, updating, or deleting documents here. To update a document, simply upload a new version with the same name. The database will take a few minutes to process the changes, and the AI will be able to access the updated information. Note that any changes made will be reflected in the AI's responses.";
+    "Manage AI-DOCU's knowledge base by adding, updating, or deleting documents here. To update a document, simply upload a new version with the same name. The database will take a few minutes to process the changes, and the AI will be able to access the updated information. Note that any changes made will be reflected in the AI's responses.";
 
   return (
     <AdminPageSection title="Documents" desc={desc}>
