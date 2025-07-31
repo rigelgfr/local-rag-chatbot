@@ -53,6 +53,9 @@ export async function getMicrosoftAccessToken(
         where: { id: account.id },
         data: {
           accessToken: await encrypt(tokenResponse.access_token),
+          refreshToken: tokenResponse.refresh_token
+            ? await encrypt(tokenResponse.refresh_token)
+            : account.refreshToken,
           accessTokenExpiresAt: newExpiresAt,
         },
       });
