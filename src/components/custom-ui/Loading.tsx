@@ -25,3 +25,13 @@ export const Loading: React.FC<LoadingProps> = ({ size = "md" }) => {
     </div>
   );
 };
+
+export function DotLoading() {
+  return (
+    <div className="flex gap-1 py-2">
+      <div className="w-3 h-3 rounded-full animate-pulse bg-black-2 dark:bg-aquamarine"></div>
+      <div className="w-3 h-3 rounded-full animate-pulse bg-black-2 dark:bg-aquamarine"></div>
+      <div className="w-3 h-3 rounded-full animate-pulse bg-black-2 dark:bg-aquamarine"></div>
+    </div>
+  );
+}
