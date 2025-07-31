@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Role } from "@/generated/prisma";
+import { Role } from "@prisma/client";
 import { Save, Trash2, UserIcon, Search } from "lucide-react";
 import {
   Table,
