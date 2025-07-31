@@ -2,14 +2,16 @@
 
 import { FileText, LogOut, MessageCircleMore, User } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { handleLogout } from "@/utils/auth";
 
 interface SidebarClientProps {
   isMod: boolean;
 }
 
 export function SidebarClient({ isMod }: SidebarClientProps) {
+  const router = useRouter();
   const pathname = usePathname();
 
   const isActive = (path: string) => {
@@ -17,6 +19,11 @@ export function SidebarClient({ isMod }: SidebarClientProps) {
       return pathname === "/" && !pathname.startsWith("/admin");
     }
     return pathname.startsWith(path);
+  };
+
+  const onLogoutClick = async () => {
+    await handleLogout();
+    router.refresh();
   };
 
   return (
@@ -45,18 +52,19 @@ export function SidebarClient({ isMod }: SidebarClientProps) {
         </Button>
       </Link>
 
-      <Link href="/">
+      <Link href="/admin/chats">
         <Button
           variant="ghost"
           size="lg"
           className={`w-12 h-12 rounded-xl transition-all duration-200 text-foreground ${
-            isActive("/") ? "bg-foreground/10" : ""
+            isActive("/admin/chats") ? "bg-foreground/10" : ""
           }`}>
           <MessageCircleMore className="!w-6 !h-6" />
         </Button>
       </Link>
 
       <Button
+        onClick={onLogoutClick}
         variant="ghost"
         size="lg"
         className="w-12 h-12 rounded-xl transition-all duration-200 text-red-500 mt-auto">
