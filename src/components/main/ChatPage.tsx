@@ -5,6 +5,7 @@ import { Message } from "@/types/chat";
 import { sendChatMessage } from "@/utils/chat";
 import ChatList from "@/components/main/ChatList";
 import ChatInput from "@/components/main/ChatInput";
+import { toast } from "sonner";
 
 export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -39,15 +40,17 @@ export default function ChatPage() {
       };
 
       setMessages((prev) => [...prev, botMessage]);
-    } catch (error) {
-      console.error("Error sending message:", error);
-      const errorMessage: Message = {
-        id: crypto.randomUUID(),
-        text: "Sorry, there was an error processing your message. Please try again.",
-        sender: "bot",
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, errorMessage]);
+    } catch (error: unknown) {
+      const status =
+        typeof error === "object" && error !== null && "status" in error
+          ? (error as { status: number }).status
+          : undefined;
+
+      if (status === 429) {
+        toast.error(
+          "You're sending too many messages too quickly. Please wait a while."
+        );
+      }
     } finally {
       setIsLoading(false);
     }
