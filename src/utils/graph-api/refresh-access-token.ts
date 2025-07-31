@@ -18,7 +18,7 @@ export interface MicrosoftTokenResponse {
 export async function refreshMicrosoftAccessToken(
   refreshToken: string
 ): Promise<MicrosoftTokenResponse> {
-  const decryptedRefreshToken = decrypt(refreshToken);
+  const decryptedRefreshToken = await decrypt(refreshToken);
   const tenantId = process.env.MICROSOFT_TENANT_ID || "common";
   const tokenUrl = `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`;
   const params = new URLSearchParams({

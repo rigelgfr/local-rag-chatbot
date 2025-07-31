@@ -7,27 +7,30 @@ import { prisma } from "@/lib/prisma";
 import { encrypt } from "@/lib/crypt";
 
 export const auth = betterAuth({
-  // databaseHooks: {
-  //   account: {
-  //     create: {
-  //       before(account) {
-  //         const withEncryptedTokens = { ...account };
+  databaseHooks: {
+    account: {
+      create: {
+        async before(account) {
+          const resultAccount = { ...account };
 
-  //         if (account.accessToken) {
-  //           const encryptedAccessToken = encrypt(account.accessToken);
-  //           withEncryptedTokens.accessToken = encryptedAccessToken;
-  //         }
-  //         if (account.refreshToken) {
-  //           const encryptedRefreshToken = encrypt(account.refreshToken);
-  //           withEncryptedTokens.refreshToken = encryptedRefreshToken;
-  //         }
-  //         return Promise.resolve({
-  //           data: withEncryptedTokens,
-  //         });
-  //       },
-  //     },
-  //   },
-  // },
+          if (account.accessToken) {
+            console.log("before:" + account.accessToken);
+            const encryptedAccessToken = await encrypt(account.accessToken);
+            console.log("after:" + encryptedAccessToken);
+            resultAccount.accessToken = encryptedAccessToken;
+          }
+          if (account.refreshToken) {
+            const encryptedRefreshToken = await encrypt(account.refreshToken);
+            resultAccount.refreshToken = encryptedRefreshToken;
+          }
+
+          return Promise.resolve({
+            data: resultAccount,
+          });
+        },
+      },
+    },
+  },
   plugins: [
     customSession(async ({ user, session }) => {
       const authDetails = await findUserAuthDetails(session.userId);
@@ -68,7 +71,7 @@ export const auth = betterAuth({
   },
   onAPIError: {
     throw: true,
-    onError: (error, _ctx) => {
+    onError: (error) => {
       console.error("Auth error:", error);
     },
     errorURL: "/",
