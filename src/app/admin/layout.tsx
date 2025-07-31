@@ -5,8 +5,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     <div className="flex h-full mx-auto sm:gap-4">
       <Sidebar />
 
-      <div className="flex-1 flex justify-center overflow-y-auto">
-        <div className="w-full p-4">{children}</div>
+      <div className="flex-1 flex justify-center h-full overflow-y-auto">
+        <div className="w-full p-4 h-full">{children}</div>
       </div>
     </div>
   );
