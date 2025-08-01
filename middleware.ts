@@ -16,6 +16,10 @@ export async function middleware(request: NextRequest) {
   if (pathname.startsWith("/admin") && session) {
     const userRole = session.user?.roles;
 
+    if (userRole === "USER") {
+      return NextResponse.redirect(new URL("/", request.url));
+    }
+
     if (userRole === "MOD") {
       if (pathname.startsWith("/admin/users")) {
         return NextResponse.redirect(new URL("/admin/docs", request.url));
@@ -31,6 +35,10 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  if (pathname.startsWith("/api") && !session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const response = NextResponse.next();
 
   response.headers.set("x-pathname", pathname);
@@ -41,7 +49,8 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     "/admin/:path*",
+    "/api/:path*",
     "/",
-    "/((?!api|_next/static|_next/image|favicon.ico|.*\\..*$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|.*\\..*$).*)",
   ],
 };
