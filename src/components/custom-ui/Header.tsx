@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Bot } from "lucide-react";
 import { ThemeToggle } from "./ToggleUI";
 import ProfilePic from "./ProfilePic";
 import { Skeleton } from "../ui/skeleton";
@@ -8,7 +7,6 @@ import { headers } from "next/headers";
 import { Suspense } from "react";
 
 import LoginButton from "./MSLoginButton";
-import Image from "next/image";
 
 async function AuthSection() {
   const session = await auth.api.getSession({

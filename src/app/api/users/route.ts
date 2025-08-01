@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/utils/auth";
-import { getMicrosoftAccessToken } from "@/utils/graph-api/get-access-token";
 import { formatToWIB } from "@/utils/timezone";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
