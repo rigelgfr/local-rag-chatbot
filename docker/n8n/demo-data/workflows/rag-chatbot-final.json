@@ -1,0 +1,998 @@
+{
+  "name": "rag-chatbot",
+  "nodes": [
+    {
+      "parameters": {
+        "chunkOverlap": 50,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        760
+      ],
+      "id": "a690408d-9931-4690-bfaa-ff3d73370450",
+      "name": "Recursive Character Text Splitter"
+    },
+    {
+      "parameters": {
+        "model": "nomic-embed-text:latest"
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOllama",
+      "typeVersion": 1,
+      "position": [
+        1040,
+        600
+      ],
+      "id": "1169841b-b49d-4488-b9bd-ccc9a3f152d4",
+      "name": "Embeddings Ollama1",
+      "credentials": {
+        "ollamaApi": {
+          "id": "3qRoUI8WzB7ixacF",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "nomic-embed-text:latest"
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOllama",
+      "typeVersion": 1,
+      "position": [
+        700,
+        160
+      ],
+      "id": "64a3d92e-1499-45cd-a110-08fd1fbf651c",
+      "name": "Embeddings Ollama",
+      "credentials": {
+        "ollamaApi": {
+          "id": "3qRoUI8WzB7ixacF",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "invoke_agent",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -200,
+        -120
+      ],
+      "id": "27be30a0-220d-4a49-bb12-e060fb96b996",
+      "name": "Webhook",
+      "webhookId": "200909e6-b807-43d0-a901-3de17ec72878",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "AnNIaRl2z9jaroRY",
+          "name": "Header Auth account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        720,
+        -120
+      ],
+      "id": "9820640e-4205-44c9-92ac-26f51ac25850",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ce1870ba-b3d3-462c-ba2e-0a397484ea69",
+              "name": "sessionId",
+              "value": "={{ $json.body.sessionId }}",
+              "type": "string"
+            },
+            {
+              "id": "ffab0ee5-40e6-47da-8dbb-fe11a90f3b4b",
+              "name": "chatInput",
+              "value": "={{ $json.body.chatInput }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        140,
+        -120
+      ],
+      "id": "478f2992-f748-447b-8487-a4b93053ea43",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1000,
+        120
+      ],
+      "id": "33cad60f-5468-4be5-a395-586df6d01dfa",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "PYvksDw9T0o0e8Ck",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "tableName": "chat_history"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        480,
+        40
+      ],
+      "id": "4a9ac458-ddec-47d0-92ad-9f3b76b6803a",
+      "name": "Postgres Chat Memory",
+      "credentials": {
+        "postgres": {
+          "id": "SaYHK3jcnAdO3fmY",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        1060,
+        -140
+      ],
+      "id": "5653b96b-162c-474b-91ef-4521ceed060f",
+      "name": "Schedule Trigger",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "DELETE FROM chat_history\nWHERE created_at < NOW() - INTERVAL '10 minutes';\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1300,
+        -140
+      ],
+      "id": "12e776db-ec89-4f6e-b011-1a210c535080",
+      "name": "Execute a SQL query",
+      "credentials": {
+        "postgres": {
+          "id": "SaYHK3jcnAdO3fmY",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Schedule delete past chats",
+        "height": 220,
+        "width": 500
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1000,
+        -200
+      ],
+      "typeVersion": 1,
+      "id": "9ae73ce8-f3e0-4e15-83be-3450aff0a1f0",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "watchFolder": true,
+        "folderId": {
+          "__rl": true,
+          "value": "01Y2G4N7BU7ILSZQARWVDYBCKKTIAQQZH2",
+          "mode": "id"
+        },
+        "options": {
+          "folderChild": true
+        }
+      },
+      "type": "n8n-nodes-base.microsoftOneDriveTrigger",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        400
+      ],
+      "id": "c84366f7-b4e9-4c5f-a5cf-b02711b95885",
+      "name": "Microsoft OneDrive Trigger",
+      "credentials": {
+        "microsoftOneDriveOAuth2Api": {
+          "id": "1jcBJvsW3Vx6wWBd",
+          "name": "Microsoft Drive account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": "={{ $json.id }}"
+      },
+      "type": "n8n-nodes-base.microsoftOneDrive",
+      "typeVersion": 1,
+      "position": [
+        820,
+        400
+      ],
+      "id": "f03ff53f-196e-4404-b624-5cb978d44aa2",
+      "name": "Download a file",
+      "credentials": {
+        "microsoftOneDriveOAuth2Api": {
+          "id": "1jcBJvsW3Vx6wWBd",
+          "name": "Microsoft Drive account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "event": "fileUpdated",
+        "simple": false,
+        "watch": "selectedFolder",
+        "folderId": {
+          "__rl": true,
+          "value": "01Y2G4N7BU7ILSZQARWVDYBCKKTIAQQZH2",
+          "mode": "id"
+        },
+        "options": {
+          "folderChild": true
+        }
+      },
+      "type": "n8n-nodes-base.microsoftOneDriveTrigger",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        600
+      ],
+      "id": "50b4e8c6-b733-4ede-9be2-f2eb40078878",
+      "name": "Microsoft OneDrive Trigger1",
+      "credentials": {
+        "microsoftOneDriveOAuth2Api": {
+          "id": "1jcBJvsW3Vx6wWBd",
+          "name": "Microsoft Drive account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        80,
+        400
+      ],
+      "id": "3f009eb0-568c-4bc2-b3e6-ad103aeeff7d",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "schema": {
+          "__rl": true,
+          "value": "app",
+          "mode": "list",
+          "cachedResultName": "app"
+        },
+        "table": {
+          "__rl": true,
+          "value": "document_metadata",
+          "mode": "list",
+          "cachedResultName": "document_metadata"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $('Set file ID').item.json.file_id }}",
+            "title": "={{ $('Set file ID').item.json.file_title }}",
+            "url": "={{ $('Set file ID').item.json.file_url }}",
+            "last_modified_by": "={{ $('Set file ID').item.json.last_modified_by }}",
+            "path": "={{ $('Set file ID').item.json.path }}",
+            "last_modified_at": "={{ $('Set file ID').item.json.last_modified_at }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": true,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "url",
+              "displayName": "url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_modified_by",
+              "displayName": "last_modified_by",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "path",
+              "displayName": "path",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "last_modified_at",
+              "displayName": "last_modified_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        620,
+        560
+      ],
+      "id": "cf4e018b-575b-4807-a9c4-95b22c245d1d",
+      "name": "Insert or update rows in a table",
+      "credentials": {
+        "postgres": {
+          "id": "SaYHK3jcnAdO3fmY",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "34a0608f-5c7a-4c39-956f-36b392021dc8",
+              "name": "file_id",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "f67e475d-ec06-45b4-99e5-7da403f8640b",
+              "name": "file_type",
+              "value": "={{ $json.file.mimeType }}",
+              "type": "string"
+            },
+            {
+              "id": "42fd3140-944b-4a47-aa93-275345e032dd",
+              "name": "file_title",
+              "value": "={{ $json.name }}",
+              "type": "string"
+            },
+            {
+              "id": "d5b88e9a-180f-4fd2-a324-ed685978c95e",
+              "name": "file_url",
+              "value": "={{ $json.webUrl }}",
+              "type": "string"
+            },
+            {
+              "id": "2b237363-49fe-4552-bbc8-6072774e03e2",
+              "name": "last_modified_by",
+              "value": "={{ $json.lastModifiedBy.user.email }}",
+              "type": "string"
+            },
+            {
+              "id": "d8b70da0-8729-48a5-be86-9a7ea6346960",
+              "name": "path",
+              "value": "={{ \n  $json.parentReference.path.replace('/drive/root:/rag-chatbot', '') || '/' \n}}",
+              "type": "string"
+            },
+            {
+              "id": "dadeb586-333e-4363-8dbb-2fb6c97ba747",
+              "name": "last_modified_at",
+              "value": "={{ $json.lastModifiedDateTime }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        260,
+        560
+      ],
+      "id": "53121eec-b1b6-4051-abc7-7ccfad396128",
+      "name": "Set file ID"
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": "documents",
+        "options": {
+          "columnNames": {
+            "values": {
+              "contentColumnName": "content"
+            }
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePGVector",
+      "typeVersion": 1.3,
+      "position": [
+        1040,
+        400
+      ],
+      "id": "ff8f776a-a13d-47b7-9652-878332da5f8a",
+      "name": "Postgres PGVector Store",
+      "credentials": {
+        "postgres": {
+          "id": "SaYHK3jcnAdO3fmY",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "dataType": "binary",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "file_id",
+                "value": "={{ $('Set file ID').first().json.file_id }}"
+              },
+              {
+                "name": "file_title",
+                "value": "={{ $('Set file ID').first().json.file_title }}"
+              },
+              {
+                "name": "last_modified_by",
+                "value": "={{ $('Set file ID').first().json.last_modified_by }}"
+              }
+            ]
+          }
+        }
+      },
+      "id": "2e91309c-dda9-4261-9b77-fcd6777aa207",
+      "name": "Default Data Loader2",
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1,
+      "position": [
+        1200,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "This is the vector database to help you answer questions.",
+        "tableName": "documents",
+        "options": {
+          "distanceStrategy": "cosine",
+          "columnNames": {
+            "values": {
+              "contentColumnName": "content"
+            }
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePGVector",
+      "typeVersion": 1.3,
+      "position": [
+        620,
+        40
+      ],
+      "id": "43811d3b-9910-4daf-94e6-3d10df97bf5b",
+      "name": "Postgres PGVector Store1",
+      "credentials": {
+        "postgres": {
+          "id": "SaYHK3jcnAdO3fmY",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Use this tool to fetch all available documents.",
+        "operation": "select",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "document_metadata",
+          "mode": "list",
+          "cachedResultName": "document_metadata"
+        },
+        "returnAll": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgresTool",
+      "typeVersion": 2.5,
+      "position": [
+        200,
+        160
+      ],
+      "id": "53063341-bdcc-4459-8b70-510bdd7b76f2",
+      "name": "List Documents1",
+      "credentials": {
+        "postgres": {
+          "id": "SaYHK3jcnAdO3fmY",
+          "name": "Postgres account"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Given a file ID, fetches the text from the document.",
+        "operation": "executeQuery",
+        "query": "SELECT \n    string_agg(text, ' ') as document_text\nFROM documents\n  WHERE metadata->>'file_id' = $1\nGROUP BY metadata->>'file_id';",
+        "options": {
+          "queryReplacement": "={{ $fromAI('file_id') }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgresTool",
+      "typeVersion": 2.5,
+      "position": [
+        80,
+        160
+      ],
+      "id": "7918e454-838a-4a70-ba9f-a34d9b82e192",
+      "name": "Get File Contents1",
+      "credentials": {
+        "postgres": {
+          "id": "SaYHK3jcnAdO3fmY",
+          "name": "Postgres account"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "DELETE FROM app.documents\nWHERE metadata->>'file_id' ILIKE '%' || '{{ $json.file_id }}' || '%';\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        440,
+        400
+      ],
+      "id": "1c9b2623-05f8-479c-a7d3-9a3cdf8ea8ec",
+      "name": "Execute a SQL query1",
+      "credentials": {
+        "postgres": {
+          "id": "SaYHK3jcnAdO3fmY",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -60,
+        20
+      ],
+      "id": "ac69c1ef-95af-48f5-a9a9-2be8efeef1d3",
+      "name": "When chat message received",
+      "webhookId": "a10b5d06-c351-430b-bff9-2949dc76e47c"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "You are a helpful personal assistant that answers questions about ALVA based on a collection of documents (text, docs, PDFs, etc.). You are a ALVA's AI assistant called AI-DOCU.\n\nYou are given tools to perform RAG in the documents table using a Postgres Vector DB. You can also look up document metadata in the document_metadata table and extract text from specific documents.\n\nAlways tell the user if you didn't find the answer. Never make something up just to please them. Output without any format.\n\nIf the user says something conversational (like \"hello\", \"thanks\", etc.), just reply naturally — you don't need to use RAG."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        360,
+        -120
+      ],
+      "id": "5b1a41aa-4dd3-4bbf-b4cf-851ab76c0921",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "llama3.1:8b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        340,
+        60
+      ],
+      "id": "ba7913f8-34a7-42e5-884b-46e0ba6eedf9",
+      "name": "Ollama Chat Model",
+      "credentials": {
+        "ollamaApi": {
+          "id": "3qRoUI8WzB7ixacF",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Data Ingestion",
+        "height": 620,
+        "width": 1720,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -240,
+        320
+      ],
+      "typeVersion": 1,
+      "id": "0fb5894d-8f43-4f83-9581-50bb124019c5",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## RAG Agent",
+        "height": 480,
+        "width": 1180,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -240,
+        -200
+      ],
+      "typeVersion": 1,
+      "id": "5d26cb7d-b098-401c-b86a-544bed82f70c",
+      "name": "Sticky Note2"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Recursive Character Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader2",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Ollama1": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Postgres PGVector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Ollama": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Postgres PGVector Store1",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        []
+      ]
+    },
+    "Postgres Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Microsoft OneDrive Trigger": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Microsoft OneDrive Trigger1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Set file ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set file ID": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert or update rows in a table": {
+      "main": [
+        [
+          {
+            "node": "Download a file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download a file": {
+      "main": [
+        [
+          {
+            "node": "Postgres PGVector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader2": {
+      "ai_document": [
+        [
+          {
+            "node": "Postgres PGVector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres PGVector Store": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres PGVector Store1": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List Documents1": {
+      "ai_tool": [
+        []
+      ]
+    },
+    "Get File Contents1": {
+      "ai_tool": [
+        []
+      ]
+    },
+    "Execute a SQL query1": {
+      "main": [
+        [
+          {
+            "node": "Insert or update rows in a table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "935dc194-60a8-4f11-a537-832ee0c748ee",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "65f1666c5b414722bb92604b04f53804b8e673902ffbd165aa16d771f8b3fde0"
+  },
+  "id": "I2kKdxI7goKInlPr",
+  "tags": []
+}
