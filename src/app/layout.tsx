@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { ThemeProvider } from "@/component/theme-provider";
+import { ThemeProvider } from "@/components/ui/theme-provider";
+import { Toaster } from "@/components/ui/sonner";
+import Header from "@/components/custom-ui/Header";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "ALVA AI Assistant",
-  description: "Simple chat interface for AI assistant",
+  title: "AI-DOCU | ALVA's AI assistant",
+  description: "AI-DOCU is ALVA's AI chatbot built to answer your questions.",
 };
 
 export default function RootLayout({
@@ -17,13 +19,18 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
+      <body
+        className={`${inter.className} h-screen flex flex-col bg-gray-50 dark:bg-black-2 overflow-hidden`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
           enableSystem
           disableTransitionOnChange>
-          {children}
+          <Toaster position="bottom-right" richColors />
+
+          <Header size="full" />
+
+          <main className="flex-1 overflow-hidden">{children}</main>
         </ThemeProvider>
       </body>
     </html>

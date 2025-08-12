@@ -1,73 +1,73 @@
 "use client";
 
-import { useState } from "react";
-import { Message } from "@/component/types";
-import { sendChatMessage } from "@/utils/chat";
-import ChatHeader from "@/component/Header";
-import ChatList from "@/component/ChatList";
-import ChatInput from "@/component/ChatInput";
+import LoginPage from "@/components/login/LoginPage";
+import ChatPage from "@/components/main/ChatPage";
+import { authClient } from "@/lib/auth-client";
+import { Loading } from "@/components/custom-ui/Loading";
+import { useEffect } from "react";
+import { toast } from "sonner";
 
-export default function ChatPage() {
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [sessionId] = useState(() => crypto.randomUUID());
+export default function Page() {
+  const { data: session, isPending } = authClient.useSession();
 
-  const sendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim() || isLoading) return;
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const error = urlParams.get("error");
+    const errorDescription = urlParams.get("error_description");
 
-    const userMessage: Message = {
-      id: crypto.randomUUID(),
-      text: input,
-      sender: "user",
-      timestamp: new Date(),
-    };
+    if (error) {
+      let message = "Authentication failed. Please try again.";
 
-    setMessages((prev) => [...prev, userMessage]);
-    setInput("");
-    setIsLoading(true);
+      if (errorDescription) {
+        if (errorDescription.includes("AADSTS50194")) {
+          message = "Please use an ALVA company account to sign in.";
+        } else if (errorDescription.includes("AADSTS50020")) {
+          message =
+            "Your account is not authorized to access this application.";
+        } else if (errorDescription.includes("AADSTS65001")) {
+          message =
+            "The application is not configured properly. Please contact support.";
+        } else if (errorDescription.includes("AADSTS50011")) {
+          message =
+            "Invalid redirect URL configuration. Please contact support.";
+        } else if (errorDescription.includes("AADSTS90014")) {
+          message = "Required field is missing. Please try again.";
+        } else if (errorDescription.includes("multi-tenant")) {
+          message = "Please use your company email address to sign in.";
+        } else if (errorDescription.includes("tenant-specific")) {
+          message =
+            "Only company accounts are allowed. Please use your work email.";
+        } else if (errorDescription.includes("cancelled")) {
+          message = "Sign in was cancelled.";
+        } else if (errorDescription.includes("consent")) {
+          message = "Please accept the permissions to continue.";
+        }
+      }
 
-    try {
-      const outputText = await sendChatMessage(sessionId, input);
+      console.log("Error details:", { error, errorDescription, message });
+      toast.error(message);
 
-      const botMessage: Message = {
-        id: crypto.randomUUID(),
-        text: outputText,
-        sender: "bot",
-        timestamp: new Date(),
-      };
-
-      setMessages((prev) => [...prev, botMessage]);
-    } catch (error) {
-      console.error("Error sending message:", error);
-      const errorMessage: Message = {
-        id: crypto.randomUUID(),
-        text: "Sorry, there was an error processing your message. Please try again.",
-        sender: "bot",
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, errorMessage]);
-    } finally {
-      setIsLoading(false);
+      setTimeout(() => {
+        window.history.replaceState(
+          {},
+          document.title,
+          window.location.pathname
+        );
+      }, 100);
     }
-  };
+  }, []);
 
-  return (
-    <div className="flex flex-col h-screen bg-gray-50 dark:bg-black-2">
-      <ChatHeader />
-
-      <div className="flex-1 overflow-hidden">
-        <div className="max-w-4xl mx-auto h-full flex flex-col">
-          <ChatList messages={messages} isLoading={isLoading} />
-          <ChatInput
-            input={input}
-            setInput={setInput}
-            onSendMessage={sendMessage}
-            isLoading={isLoading}
-          />
-        </div>
+  if (isPending) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <Loading size="lg" />
       </div>
-    </div>
-  );
+    );
+  }
+
+  if (!session) {
+    return <LoginPage />;
+  }
+
+  return <ChatPage />;
 }

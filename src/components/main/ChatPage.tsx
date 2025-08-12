@@ -1,0 +1,101 @@
+"use client";
+
+import { useState } from "react";
+import { Message } from "@/types/chat";
+import { sendChatMessage } from "@/utils/chat";
+import ChatList from "@/components/main/ChatList";
+import ChatInput from "@/components/main/ChatInput";
+import { toast } from "sonner";
+
+export default function ChatPage() {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
+  const [sessionId] = useState(() => crypto.randomUUID());
+
+  const sendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim() || isLoading) return;
+
+    const userMessage: Message = {
+      id: crypto.randomUUID(),
+      text: input,
+      sender: "user",
+      timestamp: new Date(),
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
+    setInput("");
+    setIsLoading(true);
+
+    try {
+      const outputText = await sendChatMessage(sessionId, input);
+
+      const botMessage: Message = {
+        id: crypto.randomUUID(),
+        text: outputText,
+        sender: "bot",
+        timestamp: new Date(),
+      };
+
+      setMessages((prev) => [...prev, botMessage]);
+    } catch (error: unknown) {
+      const status =
+        typeof error === "object" && error !== null && "status" in error
+          ? (error as { status: number }).status
+          : undefined;
+
+      if (status === 429) {
+        toast.error(
+          "You're sending too many messages too quickly. Please wait a while."
+        );
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResetChat = async () => {
+    setIsResetting(true);
+    try {
+      const res = await fetch(`/api/chat/reset/${sessionId}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to reset chat");
+      }
+
+      setMessages([]);
+      toast.success("Chat successfully reset.");
+      setIsResetting(false);
+    } catch (err) {
+      console.error("Reset failed:", err);
+    }
+  };
+
+  return (
+    <div className="flex flex-col h-full bg-gray-50 dark:bg-black-2">
+      <div className="flex-1 flex flex-col overflow-y-auto">
+        <div className="max-w-4xl mx-auto w-full flex-1 flex flex-col">
+          <ChatList messages={messages} isLoading={isLoading} />
+        </div>
+      </div>
+
+      <div className="flex-shrink-0">
+        <div className="max-w-4xl mx-auto">
+          <ChatInput
+            input={input}
+            setInput={setInput}
+            onSendMessage={sendMessage}
+            isLoading={isLoading}
+            messages={messages}
+            onResetChat={handleResetChat}
+            isResetting={isResetting}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
