@@ -28,4 +28,5 @@ Built with **n8n**, **Ollama**, **Next.js**, **shadcn/ui**, **Better Auth**, and
 
 ## Screenshot
 
-![AI-DOCU Screenshot](https://github.com/rigelgfr/local-rag-chatbot/blob/master/public/ss/aidocu%20ss-1.webp)
+![AI-DOCU Screenshot](https://raw.githubusercontent.com/rigelgfr/local-rag-chatbot/refs/heads/main/public/ss/aidocu%20ss-1.webp)
+![AI-DOCU Screenshot 2](https://raw.githubusercontent.com/rigelgfr/local-rag-chatbot/refs/heads/main/public/ss/aidocu%20ss-2.webp)
